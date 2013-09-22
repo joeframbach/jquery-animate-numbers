@@ -14,25 +14,27 @@
 	Inserts and accounts for commas during animation by default
 ***********/
 
-(function($) {
+(function($, undefined) {
     $.fn.animateNumbers = function(stop, commas, duration, ease) {
         return this.each(function() {
             var $this = $(this);
-            var start = parseInt($this.text().replace(/,/g, ""));
-			commas = (commas === undefined) ? true : commas;
+            var start = +$this.text().replace(/,/g, "");
+            commas = (commas === undefined) ? true : commas;
+            duration = (duration === undefined) ? 1000 : duration;
+            ease = (ease === undefined) ? "swing" : ease;
+            var updateText = function(text) {
+                if (commas) text = text.replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+                this.text(text);
+            };
             $({value: start}).animate({value: stop}, {
-            	duration: duration == undefined ? 1000 : duration,
-            	easing: ease == undefined ? "swing" : ease,
-            	step: function() {
-            		$this.text(Math.floor(this.value));
-					if (commas) { $this.text($this.text().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,")); }
-            	},
-            	complete: function() {
-            	   if (parseInt($this.text()) !== stop) {
-            	       $this.text(stop);
-					   if (commas) { $this.text($this.text().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,")); }
-            	   }
-            	}
+                duration: duration,
+                easing: ease,
+                step: updateText.call($this, Math.floor(this.value))
+                complete: function() {
+                    if (+$this.text() !== stop) {
+                        updateText.call($this, stop);
+                    }
+                }
             });
         });
     };
